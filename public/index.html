@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alamin's Note Taker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0c0c0c;
+            --bg-surface: #141414;
+            --bg-hover: #1c1c1c;
+            --bg-elevated: #1a1a1a;
+            --border-color: #27272a;
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #52525b;
+            --accent: #6366f1;
+            --accent-hover: #5558e6;
+            --accent-soft: rgba(99, 102, 241, 0.1);
+            --quill-toolbar: #141414;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #22c55e;
+            --scrollbar-bg: transparent;
+            --scrollbar-thumb: #27272a;
+        }
+
+        :root.light-theme {
+            --bg-base: #f5f5f5;
+            --bg-surface: #ffffff;
+            --bg-hover: #f0f0f0;
+            --bg-elevated: #fafafa;
+            --border-color: #e5e5e5;
+            --text-primary: #171717;
+            --text-secondary: #737373;
+            --text-tertiary: #a3a3a3;
+            --accent: #6366f1;
+            --accent-hover: #5558e6;
+            --accent-soft: rgba(99, 102, 241, 0.08);
+            --quill-toolbar: #fafafa;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #22c55e;
+            --scrollbar-bg: transparent;
+            --scrollbar-thumb: #d4d4d4;
+        }
+
+        * { box-sizing: border-box; }
+
+        ::selection {
+            background: var(--accent);
+            color: white;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            height: 100vh; overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── Sidebar ── */
+        .left-panels {
+            display: flex;
+            width: 300px;
+            min-width: 180px;
+            max-width: 500px;
+            flex-shrink: 0;
+            z-index: 10;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0s;
+        }
+        .app-container.resizing .left-panels {
+            transition: none;
+            user-select: none;
+        }
+
+        .app-container.sidebar-hidden .left-panels {
+            margin-left: calc(-300px - 4px);
+        }
+
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            width: 4px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 20;
+            background: transparent;
+            transition: background 0.15s;
+        }
+        .resize-handle:hover,
+        .resize-handle.active {
+            background: var(--accent);
+        }
+
+        .notes-panel {
+            width: 100%;
+            display: flex; flex-direction: column;
+        }
+
+        .brand-container {
+            padding: 20px 20px 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #f472b6, #a78bfa, #6366f1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: white;
+            flex-shrink: 0;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(162, 130, 250, 0.3);
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .brand-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.2px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-sub {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 1px;
+        }
+
+        .notes-header {
+            padding: 12px 20px 12px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .notes-header h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+        .header-actions { display: flex; gap: 6px; }
+
+        .btn-action {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .btn-action:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-action.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        .btn-action.primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .search-bar {
+            margin: 8px 20px 4px 20px;
+            display: flex;
+            align-items: center;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0 10px;
+            transition: border-color 0.2s;
+        }
+        .search-bar:focus-within {
+            border-color: var(--accent);
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 7px 6px;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-bar input::placeholder {
+            color: var(--text-tertiary);
+        }
+        .search-bar-icon {
+            color: var(--text-tertiary);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .notes-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 6px 0;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 60px 24px; text-align: center;
+            color: var(--text-secondary); font-size: 13px;
+        }
+        .empty-state-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+            line-height: 1;
+        }
+        .empty-state-text { line-height: 1.6; max-width: 200px; }
+
+        .loading-skeleton {
+            padding: 12px 20px;
+        }
+        .loading-skeleton-line {
+            height: 12px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            animation: shimmer 1.4s ease-in-out infinite;
+        }
+        .loading-skeleton-line:nth-child(2) { width: 70%; }
+        .loading-skeleton-line:nth-child(3) { width: 85%; }
+        .loading-skeleton-line:nth-child(4) { width: 55%; }
+        .loading-skeleton-line:nth-child(5) { width: 75%; }
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* ── Tree items ── */
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            user-select: none;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .tree-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: transparent;
+            transition: background 0.15s;
+        }
+        .tree-item:hover { background: var(--bg-hover); }
+        .tree-item.active {
+            background: var(--accent-soft);
+        }
+        .tree-item.active::before {
+            background: var(--accent);
+        }
+
+        .tree-item-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .tree-item-icon {
+            flex-shrink: 0;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0.6;
+        }
+        .tree-item-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .tree-item-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: default;
+        }
+        .tree-item-title-edit {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .tree-item-preview {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 1px;
+        }
+        .inline-actions {
+            display: none;
+            gap: 2px;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+        .tree-item:hover .inline-actions { display: flex; }
+
+        .btn-inline {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.15s;
+        }
+        .btn-inline:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface);
+        }
+
+        .sub-tree {
+            display: none;
+            overflow: hidden;
+        }
+        .sub-tree.expanded {
+            display: block;
+        }
+
+        .notes-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .footer-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ── Editor ── */
+        .editor-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-surface);
+            min-width: 0;
+            position: relative;
+        }
+
+        .editor-topbar {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-base);
+        }
+        .editor-status {
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .floating-reveal-btn {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            padding: 0 16px;
+            height: 38px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            z-index: 50;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.25s;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+        .app-container.sidebar-hidden .floating-reveal-btn {
+            display: flex;
+            animation: revealPulse 2s ease-in-out infinite;
+        }
+        @keyframes revealPulse {
+            0%, 100% { box-shadow: var(--shadow-lg); }
+            50% { box-shadow: var(--shadow-lg), 0 0 20px var(--accent-soft); }
+        }
+        .floating-reveal-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+            border-color: var(--accent);
+            transform: translateX(-50%) scale(1.03);
+            animation: none;
+        }
+
+        .icon-btn-action {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 15px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .icon-btn-action:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .editor-content-area {
+            padding: 32px 80px;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ── Google Docs-style Toolbar ── */
+        .ql-toolbar.ql-snow {
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            padding: 3px 12px;
+            background: var(--quill-toolbar);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1px;
+        }
+        .ql-toolbar.ql-snow .ql-formats {
+            display: flex;
+            align-items: center;
+            margin-right: 0;
+            padding: 0 5px;
+            border-right: 1px solid var(--border-color);
+        }
+        .ql-toolbar.ql-snow .ql-formats:last-child {
+            border-right: none;
+        }
+        .ql-toolbar.ql-snow button {
+            width: 26px;
+            height: 26px;
+            padding: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.12s;
+        }
+        .ql-toolbar.ql-snow button:hover {
+            background: var(--bg-hover);
+        }
+        .ql-toolbar.ql-snow button.ql-active {
+            background: var(--accent);
+        }
+        .ql-toolbar.ql-snow button.ql-active .ql-stroke { stroke: #fff; }
+        .ql-toolbar.ql-snow button.ql-active .ql-fill { fill: #fff; }
+
+        .ql-toolbar.ql-snow .custom-toolbar-btn {
+            width: 26px;
+            height: 26px;
+            padding: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.12s;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .ql-toolbar.ql-snow .custom-toolbar-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .ql-toolbar.ql-snow .ql-picker {
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .ql-toolbar.ql-snow .ql-picker-label {
+            border: 1px solid transparent;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .ql-toolbar.ql-snow .ql-picker-label:hover {
+            border-color: var(--border-color);
+        }
+        .ql-toolbar.ql-snow .ql-picker-options {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            padding: 4px;
+        }
+        .ql-toolbar.ql-snow .ql-picker-options .ql-picker-item {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .ql-toolbar.ql-snow .ql-picker-options .ql-picker-item:hover {
+            background: var(--bg-hover);
+        }
+        .ql-container.ql-snow { border: none; }
+        .ql-editor {
+            padding: 0;
+            min-height: 400px;
+            color: var(--text-primary);
+            line-height: 1.65;
+            font-size: 16px;
+        }
+        .ql-editor.ql-blank::before {
+            color: var(--text-tertiary);
+            font-style: normal;
+            left: 0;
+        }
+
+        .ql-editor table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            border: 1px solid var(--text-secondary);
+        }
+        .ql-editor td {
+            border: 1px solid var(--text-secondary);
+            padding: 6px 10px;
+            min-width: 40px;
+        }
+
+        .ql-snow .ql-stroke { stroke: var(--text-secondary); }
+        .ql-snow .ql-fill { fill: var(--text-secondary); }
+        .ql-snow .ql-picker { color: var(--text-secondary); }
+        .ql-snow .ql-active .ql-stroke { stroke: #fff; }
+        .ql-snow .ql-active .ql-fill { fill: #fff; }
+        .ql-snow .ql-picker-label.ql-active { color: var(--accent); }
+
+        .ql-snow .ql-editor h1 { font-size: 24px; font-weight: 700; }
+        .ql-snow .ql-editor h2 { font-size: 20px; font-weight: 600; }
+        .ql-snow .ql-editor h3 { font-size: 17px; font-weight: 600; }
+
+        /* ── Table grid popup ── */
+        .table-grid-popup {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            padding: 10px;
+        }
+        .table-grid-popup.open { display: block; }
+        .table-grid-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .table-grid {
+            display: grid;
+            gap: 2px;
+        }
+        .table-grid-cell {
+            width: 14px;
+            height: 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .table-grid-cell.selected {
+            background: var(--accent);
+            border-color: var(--accent-hover);
+        }
+        .table-grid-cell:hover {
+            background: var(--accent);
+            border-color: var(--accent-hover);
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-overlay.open .modal {
+            animation: modalScaleIn 0.2s ease;
+        }
+        @keyframes modalScaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            width: 380px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal h3 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .modal-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .modal-input:focus {
+            border-color: var(--accent);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .modal-actions .btn-action {
+            padding: 7px 16px;
+            font-size: 13px;
+        }
+
+        /* ── Toasts ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: toastIn 0.25s ease;
+            pointer-events: auto;
+            max-width: 300px;
+        }
+        .toast.toast-out {
+            animation: toastOut 0.2s ease forwards;
+        }
+        .toast-error {
+            background: var(--danger);
+            color: white;
+        }
+        .toast-success {
+            background: var(--success);
+            color: white;
+        }
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="appMainWrapper">
+        <div class="left-panels">
+            <section class="notes-panel">
+                <div class="brand-container">
+                    <div class="brand-icon">✦</div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">Alamin's Note Taker</h1>
+                        <span class="brand-sub">Workspace</span>
+                    </div>
+                </div>
+
+                <div class="notes-header">
+                    <div class="header-actions">
+                        <button class="btn-action" id="createFolderBtn">+ Folder</button>
+                        <button class="btn-action primary" id="createNoteBtn">+ Note</button>
+                    </div>
+                </div>
+
+                <div class="search-bar">
+                    <span class="search-bar-icon">⌕</span>
+                    <input type="text" id="searchInput" placeholder="Search notes..." autocomplete="off">
+                </div>
+
+                <div class="notes-list" id="treeRootContainer"></div>
+
+                <div class="notes-footer">
+                    <button class="btn-action" id="themeToggleBtn">🌓 Theme</button>
+                    <div class="footer-right-actions">
+                        <button class="icon-btn-action" onclick="toggleSidebarView()" title="Hide Sidebar">✕</button>
+                    </div>
+                </div>
+            </section>
+            <div class="resize-handle" id="resizeHandle"></div>
+        </div>
+
+        <main class="editor-panel">
+            <button class="floating-reveal-btn" onclick="toggleSidebarView()" title="Show Sidebar">◀ Show sidebar</button>
+
+            <div class="editor-topbar">
+                <span class="editor-status" id="editorStatus">Select or create a note</span>
+                <div style="flex-grow: 1;"></div>
+                <button class="btn-action primary" style="font-size: 12px; padding: 6px 12px;" id="saveBtn">Save</button>
+            </div>
+
+            <div id="toolbar-container">
+                <span class="ql-formats" style="gap: 2px;">
+                    <button id="size-decrease-btn" class="custom-toolbar-btn" title="Decrease font size" style="font-size:13px;font-weight:600;">A–</button>
+                    <select class="ql-size" title="Font Size" style="min-width:52px;">
+                        <option value="11px">11</option>
+                        <option value="12px">12</option>
+                        <option value="13px">13</option>
+                        <option value="14px">14</option>
+                        <option value="16px">16</option>
+                        <option value="18px">18</option>
+                        <option value="20px">20</option>
+                        <option value="24px">24</option>
+                        <option value="28px">28</option>
+                        <option value="32px">32</option>
+                        <option value="36px">36</option>
+                    </select>
+                    <button id="size-increase-btn" class="custom-toolbar-btn" title="Increase font size" style="font-size:13px;font-weight:600;">A+</button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-bold" title="Bold"></button>
+                    <button class="ql-italic" title="Italic"></button>
+                    <button class="ql-underline" title="Underline"></button>
+                    <button class="ql-strike" title="Strikethrough"></button>
+                </span>
+                <span class="ql-formats">
+                    <select class="ql-color" title="Text Color">
+                        <option value="#e74c3c" label="Red"></option>
+                        <option value="#e67e22" label="Orange"></option>
+                        <option value="#f1c40f" label="Yellow"></option>
+                        <option value="#2ecc71" label="Green"></option>
+                        <option value="#3498db" label="Blue"></option>
+                        <option value="#9b59b6" label="Purple"></option>
+                        <option value="#34495e" label="Dark"></option>
+                    </select>
+                    <select class="ql-background" title="Highlight Color">
+                        <option value="#fadbd8" label="Red"></option>
+                        <option value="#fdebd0" label="Orange"></option>
+                        <option value="#fef9e7" label="Yellow"></option>
+                        <option value="#d5f5e3" label="Green"></option>
+                        <option value="#d6eaf8" label="Blue"></option>
+                        <option value="#e8daef" label="Purple"></option>
+                        <option value="#f2f3f4" label="Gray"></option>
+                    </select>
+                </span>
+                <span class="ql-formats">
+                    <select class="ql-header">
+                        <option value="false">Normal</option>
+                        <option value="1">Heading 1</option>
+                        <option value="2">Heading 2</option>
+                        <option value="3">Heading 3</option>
+                    </select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-list" value="ordered" title="Numbered List"></button>
+                    <button class="ql-list" value="bullet" title="Bulleted List"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-align" value="" title="Align Left"></button>
+                    <button class="ql-align" value="center" title="Align Center"></button>
+                    <button class="ql-align" value="right" title="Align Right"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-link" title="Link"></button>
+                    <button id="custom-table-btn" class="custom-toolbar-btn" title="Insert Table">⊞</button>
+                    <button class="ql-clean" title="Clear formatting"></button>
+                </span>
+            </div>
+
+            <!-- Table grid popup -->
+            <div class="table-grid-popup" id="tableGridPopup">
+                <div class="table-grid-label" id="tableGridLabel">1 × 1</div>
+                <div class="table-grid" id="tableGrid"></div>
+            </div>
+
+            <div class="editor-content-area">
+                <div id="editor-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Create / Table -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Create</h3>
+            <label class="modal-label" id="modalInputLabel">Title</label>
+            <input class="modal-input" id="modalInput" type="text" placeholder="Enter title" autofocus>
+            <div id="modalExtraFields"></div>
+            <div class="modal-actions">
+                <button class="btn-action" id="modalCancelBtn" type="button">Cancel</button>
+                <button class="btn-action primary" id="modalConfirmBtn" type="button">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // ── Toast system ──
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast toast-' + type;
+            el.textContent = message;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('toast-out');
+                setTimeout(() => el.remove(), 200);
+            }, 2800);
+        }
+
+        // ── Modal system ──
+        let modalResolve = null;
+        let modalBusy = false;
+
+        function openModal(config) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('modalOverlay');
+                document.getElementById('modalTitle').textContent = config.title;
+                document.getElementById('modalInputLabel').textContent = config.label || 'Title';
+                document.getElementById('modalInput').value = config.initialValue || '';
+                document.getElementById('modalInput').placeholder = config.placeholder || 'Enter value';
+                document.getElementById('modalConfirmBtn').textContent = config.confirmText || 'Create';
+                document.getElementById('modalExtraFields').innerHTML = config.extraFields || '';
+
+                modalResolve = resolve;
+                overlay.classList.add('open');
+                modalBusy = false;
+                setTimeout(() => document.getElementById('modalInput').focus(), 50);
+            });
+        }
+
+        function dismissModal(value) {
+            if (modalBusy) return;
+            modalBusy = true;
+            document.getElementById('modalOverlay').classList.remove('open');
+            if (modalResolve) modalResolve(value);
+            modalResolve = null;
+        }
+
+        document.getElementById('modalInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissModal(e.target.value);
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissModal(null);
+            }
+        });
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+            dismissModal(document.getElementById('modalInput').value);
+        });
+        document.getElementById('modalCancelBtn').addEventListener('click', () => {
+            dismissModal(null);
+        });
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) dismissModal(null);
+        });
+
+        // ── Quill setup (with custom table blot + font sizes) ──
+        (function registerTableBlot() {
+            const BlockEmbed = Quill.import('blots/block/embed');
+            class TableBlot extends BlockEmbed {
+                static blotName = 'table';
+                static tagName = 'table';
+                static create(value) {
+                    const node = super.create(value);
+                    node.style.cssText = 'border-collapse:collapse;width:100%;margin:15px 0;border:1px solid #a1a1aa;';
+                    if (value) node.innerHTML = value;
+                    return node;
+                }
+                static value(node) {
+                    return node.innerHTML;
+                }
+            }
+            Quill.register(TableBlot);
+        })();
+
+        (function registerFontSizes() {
+            const SizeStyle = Quill.import('attributors/style/size');
+            SizeStyle.whitelist = ['11px', '12px', '13px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px'];
+            Quill.register(SizeStyle, true);
+        })();
+
+        const FONT_SIZES = ['11px', '12px', '13px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px'];
+
+        const quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: { toolbar: '#toolbar-container' }
+        });
+
+        // ── Font size increase/decrease ──
+        function changeFontSize(direction) {
+            const range = quill.getSelection(true);
+            if (!range) return;
+            const currentSize = quill.getFormat(range).size || '16px';
+            const idx = FONT_SIZES.indexOf(currentSize);
+            const nextIdx = Math.min(Math.max(idx + direction, 0), FONT_SIZES.length - 1);
+            if (nextIdx === idx) return;
+            quill.format('size', FONT_SIZES[nextIdx]);
+        }
+        document.getElementById('size-decrease-btn').addEventListener('click', () => changeFontSize(-1));
+        document.getElementById('size-increase-btn').addEventListener('click', () => changeFontSize(1));
+
+        // ── Table grid popup (Google Docs style) ──
+        const GRID_MAX = 8;
+        const tableGridPopup = document.getElementById('tableGridPopup');
+        const tableGridEl = document.getElementById('tableGrid');
+        const tableGridLabel = document.getElementById('tableGridLabel');
+        let selectedRows = 1, selectedCols = 1;
+
+        function buildTableGrid(rows, cols) {
+            tableGridEl.style.gridTemplateColumns = 'repeat(' + cols + ', 16px)';
+            tableGridEl.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'table-grid-cell' + (r < selectedRows && c < selectedCols ? ' selected' : '');
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    tableGridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function updateTableGridHover(r, c) {
+            const cells = tableGridEl.querySelectorAll('.table-grid-cell');
+            cells.forEach(cell => {
+                const cr = parseInt(cell.dataset.r);
+                const cc = parseInt(cell.dataset.c);
+                cell.classList.toggle('selected', cr <= r && cc <= c);
+            });
+            tableGridLabel.textContent = (r + 1) + ' \u00d7 ' + (c + 1);
+            selectedRows = r + 1;
+            selectedCols = c + 1;
+        }
+
+        function insertTableAtCursor(numRows, numCols) {
+            const range = quill.getSelection(true);
+            if (!range) return;
+
+            let html = '';
+            for (let i = 0; i < numRows; i++) {
+                html += '<tr>';
+                for (let j = 0; j < numCols; j++) {
+                    html += '<td style="border:1px solid #a1a1aa;padding:6px 10px;min-width:40px;"><br></td>';
+                }
+                html += '</tr>';
+            }
+
+            const tableHtml = '<tbody>' + html + '</tbody>';
+            quill.insertEmbed(range.index, 'table', tableHtml);
+            quill.setSelection(range.index + 1, 0);
+            quill.format('table', false);
+        }
+
+        const tableBtn = document.getElementById('custom-table-btn');
+        tableBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = tableBtn.getBoundingClientRect();
+            selectedRows = 1;
+            selectedCols = 1;
+            buildTableGrid(GRID_MAX, GRID_MAX);
+            tableGridLabel.textContent = '1 \u00d7 1';
+            let left = rect.left;
+            const popupWidth = GRID_MAX * 16 + (GRID_MAX - 1) * 2 + 24;
+            if (left + popupWidth > window.innerWidth - 8) {
+                left = window.innerWidth - popupWidth - 8;
+            }
+            if (left < 8) left = 8;
+            tableGridPopup.style.top = (rect.bottom + 4) + 'px';
+            tableGridPopup.style.left = left + 'px';
+            tableGridPopup.classList.add('open');
+        });
+
+        tableGridEl.addEventListener('mouseover', (e) => {
+            const cell = e.target.closest('.table-grid-cell');
+            if (!cell) return;
+            updateTableGridHover(parseInt(cell.dataset.r), parseInt(cell.dataset.c));
+        });
+
+        tableGridEl.addEventListener('click', (e) => {
+            const cell = e.target.closest('.table-grid-cell');
+            if (!cell) return;
+            const r = parseInt(cell.dataset.r) + 1;
+            const c = parseInt(cell.dataset.c) + 1;
+            tableGridPopup.classList.remove('open');
+            insertTableAtCursor(r, c);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!tableGridPopup.contains(e.target) && e.target !== tableBtn) {
+                tableGridPopup.classList.remove('open');
+            }
+        });
+
+        // ── State ──
+        let allItems = [];
+        let currentNoteId = null;
+        let autoSaveTimeout = null;
+        let expandedFolders = new Set();
+        let isSwitchingNotes = false;
+        let hasUnsavedChanges = false;
+
+        // ── Sidebar toggle ──
+        function toggleSidebarView() {
+            document.getElementById('appMainWrapper').classList.toggle('sidebar-hidden');
+        }
+
+        // ── Sidebar resize ──
+        (function() {
+            const handle = document.getElementById('resizeHandle');
+            const panel = document.querySelector('.left-panels');
+            const wrapper = document.getElementById('appMainWrapper');
+            let startX, startW;
+
+            function onDown(e) {
+                startX = e.clientX;
+                startW = panel.getBoundingClientRect().width;
+                handle.classList.add('active');
+                wrapper.classList.add('resizing');
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                e.preventDefault();
+            }
+
+            function onMove(e) {
+                const w = Math.min(500, Math.max(180, startW + (e.clientX - startX)));
+                panel.style.width = w + 'px';
+            }
+
+            function onUp() {
+                handle.classList.remove('active');
+                wrapper.classList.remove('resizing');
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            }
+
+            handle.addEventListener('mousedown', onDown);
+        })();
+
+        // ── Theme ──
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('light-theme');
+            const isLight = html.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // Restore theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+
+        document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+
+        // ── Search ──
+        let searchTimeout = null;
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(renderWorkspaceTree, 150);
+        });
+
+        // ── Fetch workspace ──
+        async function fetchWorkspace() {
+            const container = document.getElementById('treeRootContainer');
+            container.innerHTML =
+                '<div class="loading-skeleton">' +
+                '<div class="loading-skeleton-line"></div>'.repeat(5) +
+                '</div>';
+            try {
+                const response = await fetch('/api/notes');
+                if (!response.ok) throw new Error('Failed to fetch notes');
+                allItems = await response.json();
+                renderWorkspaceTree();
+            } catch (err) {
+                console.error('Workspace fetch error:', err);
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Failed to load notes. Check your connection.</div></div>';
+                showToast('Failed to load notes', 'error');
+            }
+        }
+
+        // ── Render tree ──
+        function renderWorkspaceTree() {
+            const container = document.getElementById('treeRootContainer');
+            container.innerHTML = '';
+
+            const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            let filteredItems = allItems;
+            if (query) {
+                filteredItems = allItems.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    (item.content && item.content.toLowerCase().includes(query))
+                );
+            }
+
+            const roots = filteredItems.filter(item => !item.parent_id);
+
+            if (roots.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${query ? '🔍' : '📝'}</div>
+                        <div class="empty-state-text">${query ? 'No results for "<strong>' + escapeHtml(query) + '</strong>"' : 'No notes yet.<br>Click <strong>+ Note</strong> or <strong>+ Folder</strong> to get started.'}</div>
+                    </div>`;
+                return;
+            }
+
+            roots.forEach(rootItem => {
+                container.appendChild(createItemElement(rootItem, 0));
+            });
+        }
+
+        function createItemElement(item, depth) {
+            const wrapper = document.createElement('div');
+
+            const row = document.createElement('div');
+            row.className = 'tree-item' + (item.id === currentNoteId ? ' active' : '');
+            row.style.paddingLeft = ((depth * 16) + 12) + 'px';
+
+            const icon = item.is_folder ? (expandedFolders.has(item.id) ? '📂' : '📁') : '📄';
+
+            const preview = item.content ? getContentPreview(item.content) : '';
+
+            row.innerHTML = `
+                <div class="tree-item-content">
+                    <span class="tree-item-icon">${icon}</span>
+                    <div class="tree-item-text">
+                        <span class="tree-item-title" data-id="${item.id}">${escapeHtml(item.title)}</span>
+                        ${preview ? `<span class="tree-item-preview">${escapeHtml(preview)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="inline-actions">
+                    ${item.is_folder ? `<button class="btn-inline" title="Add note inside" data-add-in="${item.id}">➕</button>` : ''}
+                    <button class="btn-inline" title="Delete" data-delete="${item.id}">🗑️</button>
+                </div>
+            `;
+
+            row.querySelector('[data-add-in]')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                createNewItem(false, item.id);
+            });
+
+            row.querySelector('[data-delete]')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteItem(item.id);
+            });
+
+            row.querySelector('.tree-item-title')?.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                startRename(item.id, e.target);
+            });
+
+            row.onclick = () => {
+                if (item.is_folder) {
+                    if (expandedFolders.has(item.id)) {
+                        expandedFolders.delete(item.id);
+                    } else {
+                        expandedFolders.add(item.id);
+                    }
+                    renderWorkspaceTree();
+                } else {
+                    loadNoteIntoEditor(item.id);
+                }
+            };
+
+            wrapper.appendChild(row);
+
+            if (item.is_folder && expandedFolders.has(item.id)) {
+                const subTree = document.createElement('div');
+                subTree.className = 'sub-tree expanded';
+                const children = allItems.filter(child => child.parent_id === item.id);
+                children.forEach(child => {
+                    subTree.appendChild(createItemElement(child, depth + 1));
+                });
+                wrapper.appendChild(subTree);
+            }
+
+            return wrapper;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getContentPreview(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            let text = div.textContent.trim();
+            text = text.split('\n')[0].slice(0, 80);
+            return text.replace(/<[^>]*>/g, '').trim();
+        }
+
+        // ── Inline rename ──
+        function startRename(id, titleEl) {
+            const item = allItems.find(i => i.id === id);
+            if (!item) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'tree-item-title-edit';
+            input.value = item.title;
+            input.setAttribute('data-id', id);
+
+            titleEl.replaceWith(input);
+            input.focus();
+            input.select();
+
+            function finish(shouldSave) {
+                if (shouldSave && input.value.trim()) {
+                    const newTitle = input.value.trim();
+                    if (newTitle !== item.title) {
+                        item.title = newTitle;
+                        fetch('/api/notes/' + id, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: newTitle })
+                        }).catch(() => {});
+                        if (currentNoteId === id) {
+                            renderWorkspaceTree();
+                        }
+                    }
+                }
+                const span = document.createElement('span');
+                span.className = 'tree-item-title';
+                span.textContent = item.title;
+                input.replaceWith(span);
+                if (currentNoteId === id) {
+                    renderWorkspaceTree();
+                }
+            }
+
+            input.addEventListener('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') { input.blur(); }
+                if (e.key === 'Escape') { finish(false); }
+            });
+
+            input.addEventListener('blur', () => finish(true));
+        }
+
+        // ── Create item ──
+        document.getElementById('createFolderBtn').addEventListener('click', () => createNewItem(true));
+        document.getElementById('createNoteBtn').addEventListener('click', () => createNewItem(false));
+
+        async function createNewItem(isFolder, parentId = null) {
+            const title = await openModal({
+                title: isFolder ? 'New Folder' : 'New Note',
+                label: 'Title',
+                placeholder: isFolder ? 'Folder name' : 'Note title',
+                confirmText: 'Create'
+            });
+
+            if (title === null) return;
+            const safeTitle = title.trim() || (isFolder ? 'Untitled Folder' : 'Untitled Note');
+
+            const payload = {
+                title: safeTitle,
+                content: isFolder ? '' : '<p><br></p>',
+                is_folder: isFolder,
+                parent_id: parentId
+            };
+
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Failed to create');
+                }
+
+                if (parentId) expandedFolders.add(parentId);
+                await fetchWorkspace();
+                showToast(`${isFolder ? 'Folder' : 'Note'} created`, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // ── Load note ──
+        function loadNoteIntoEditor(id) {
+            const note = allItems.find(item => item.id === id);
+            if (!note || note.is_folder) return;
+
+            if (hasUnsavedChanges) {
+                if (!confirm('You have unsaved changes. Discard them?')) return;
+            }
+
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = null;
+            }
+
+            isSwitchingNotes = true;
+            currentNoteId = note.id;
+            hasUnsavedChanges = false;
+
+            quill.root.innerHTML = note.content;
+            document.getElementById('editorStatus').textContent = 'All changes saved';
+
+            renderWorkspaceTree();
+
+            setTimeout(() => { isSwitchingNotes = false; }, 50);
+        }
+
+        // ── Save note ──
+        function getTitleFromContent(content) {
+            const div = document.createElement('div');
+            div.innerHTML = content;
+            const text = div.textContent.trim();
+            return text.split('\n')[0].slice(0, 60) || 'Untitled Note';
+        }
+
+        async function saveCurrentNote() {
+            const targetSaveId = currentNoteId;
+            if (!targetSaveId) return;
+
+            const activeItem = allItems.find(i => i.id === targetSaveId);
+            if (!activeItem || activeItem.is_folder) return;
+
+            const content = quill.root.innerHTML;
+            const title = getTitleFromContent(content);
+
+            if (activeItem.title === title && activeItem.content === content) {
+                document.getElementById('editorStatus').textContent = 'All changes saved';
+                hasUnsavedChanges = false;
+                return;
+            }
+
+            document.getElementById('editorStatus').textContent = 'Saving changes...';
+
+            try {
+                const response = await fetch('/api/notes/' + targetSaveId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Save failed');
+                }
+
+                document.getElementById('editorStatus').textContent = 'All changes saved';
+                activeItem.title = title;
+                activeItem.content = content;
+                hasUnsavedChanges = false;
+                renderWorkspaceTree();
+                showToast('Note saved', 'success');
+            } catch (err) {
+                document.getElementById('editorStatus').textContent = '⚠️ Save failed';
+                showToast(err.message, 'error');
+            }
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = null;
+            }
+            saveCurrentNote();
+        });
+
+        // ── Auto-save ──
+        function triggerAutoSave() {
+            if (isSwitchingNotes || !currentNoteId) return;
+
+            const activeItem = allItems.find(i => i.id === currentNoteId);
+            if (!activeItem || activeItem.is_folder) return;
+
+            hasUnsavedChanges = true;
+            document.getElementById('editorStatus').textContent = 'Unsaved changes...';
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(saveCurrentNote, 1000);
+        }
+
+        quill.on('text-change', triggerAutoSave);
+
+        // ── Delete item ──
+        async function deleteItem(id) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+
+            try {
+                const response = await fetch('/api/notes/' + id, { method: 'DELETE' });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    if (response.status === 409) {
+                        showToast(err.error, 'error');
+                        return;
+                    }
+                    throw new Error(err.error || 'Delete failed');
+                }
+
+                if (currentNoteId === id) {
+                    currentNoteId = null;
+                    hasUnsavedChanges = false;
+                    quill.root.innerHTML = '';
+                    document.getElementById('editorStatus').textContent = 'Select or create a note';
+                }
+
+                await fetchWorkspace();
+                showToast('Deleted', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // ── Keyboard shortcuts ──
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (autoSaveTimeout) {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = null;
+                }
+                saveCurrentNote();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                createNewItem(false);
+            }
+        });
+
+        // ── Warn before closing with unsaved changes ──
+        window.addEventListener('beforeunload', (e) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // ── Init ──
+        fetchWorkspace();
+    </script>
+</body>
+</html>
