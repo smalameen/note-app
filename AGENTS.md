@@ -51,10 +51,46 @@ node server.js          # starts on http://localhost:3000
 - **Resizable sidebar** — drag handle between sidebar and editor; range 180px–500px
 - **Inline rename** — double-click any note/folder title in the tree to edit inline; saves on Enter/blur
 
+## 2026-07-12 — Login & Signup
+
+### Backend (`server.js`)
+- **Auth routes** — `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
+- **Auth middleware** (`authenticate`) — verifies JWT via `supabase.auth.getUser()`; attaches `req.user`
+- **Notes scoped to user** — all notes routes require `authenticate`; queries filtered by `user_id`; inserts include `req.user.id`
+- **Admin client** — uses `SUPABASE_SECRET_KEY` from `.env` for server-side logout; skips if key not set
+- **Password policy** — minimum 6 characters, validated server-side
+
+### Frontend (`public/index.html`)
+- **Auth overlay** — replaces app with a centered login/signup card; toggles between Sign In and Create Account
+- **Token persistence** — `access_token` stored in `localStorage` as `auth_token`; user info as `auth_user`
+- **`api()` wrapper** — all fetch calls go through this helper (auto-attaches `Authorization: Bearer` header; redirects to login on 401)
+- **Session recovery** — `checkAuth()` validates stored token against `GET /api/auth/me` on page load
+- **Logout button** — appears in sidebar footer; clears token and returns to auth screen
+- **Email confirmation** — if Supabase requires email confirmation, signup shows a success message and switches to login mode
+- **Notes init** — `initApp()` only runs after successful auth; `fetchWorkspace()` uses the authed `api()` wrapper
+
+### Database note
+Add a `user_id` column (type `uuid`) to the `notesupdated` Supabase table so that notes are scoped per user. Existing notes without `user_id` won't appear.
+
+## 2026-07-12 — Visual redesign
+
+### Design system
+- **Warm-neutral palette** — replaced generic indigo/purple with a sophisticated sage-accented scheme (#6b8f7c dark, #5b8c7a light)
+- **No emojis anywhere** — tree items use `▸`/`▾` for folders, `·` for notes; inline actions use `+`/`×`; brand icon is `⌘`; search icon is `/`
+- **No gradients** — brand icon uses solid accent color instead of purple/pink gradient
+- **Custom Quill toolbar** — overrode stock snow theme with rounded buttons, accent-colored active states, subtle hover backgrounds
+- **Refined typography** — better heading sizes/weights (650/600/550), tighter line-height for headings, optimized Inter usage
+- **Editor width** — constrained to 800px max for comfortable reading; increased vertical padding to 48px
+- **Professional auth/modal** — replaced gradient brand with solid accent, added focus rings (`box-shadow`), better blur overlay (6px), refined border-radii
+- **Status indicators** — editor status uses color-coded states (accent=saving, dim=unsaved, danger=failed)
+- **Toast redesign** — changed from slide-in-right to subtle fade-up animation; success toasts use accent color instead of green
+- **Scrollbar** — matches border color, subtle 6px width
+- **No personal branding** — "Alamin's Note Taker" → "Notes"
+
 ## App entrypoints
 
 | Layer | File | Notes |
 |-------|------|-------|
-| Backend | `server.js` | Express app, mounts `/api/notes` routes |
+| Backend | `server.js` | Express app, mounts `/api/notes` and `/api/auth` routes |
 | Frontend | `public/index.html` | Single HTML file, Quill CDN, all logic inline |
-| Database | Supabase (`notesupdated` table) | `id`, `title`, `content`, `is_folder`, `parent_id`, `created_at` |
+| Database | Supabase (`notesupdated` table) | `id`, `title`, `content`, `is_folder`, `parent_id`, `created_at`, `user_id` |
