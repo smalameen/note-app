@@ -20,11 +20,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 app.use(express.static('public'));
 
-// Initialize Supabase Client
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase Clients
+const supabase = createClient(supabaseUrl, supabaseKey); // anon key — used for auth operations
+
+const supabaseSecret = process.env.SUPABASE_SECRET_KEY;
+const supabaseService = supabaseSecret
+    ? createClient(supabaseUrl, supabaseSecret, { auth: { autoRefreshToken: false, persistSession: false } })
+    : supabase; // fallback to anon if secret not set
 
 // Admin client for auth operations (uses service_role key)
-const supabaseSecret = process.env.SUPABASE_SECRET_KEY;
 const supabaseAdmin = supabaseSecret
     ? createClient(supabaseUrl, supabaseSecret, { auth: { autoRefreshToken: false, persistSession: false } })
     : null;
@@ -142,7 +146,7 @@ app.get('/api/health', (_req, res) => {
 // GET: Fetch all notes (user-scoped, graceful fallback if user_id column missing)
 app.get('/api/notes', authenticate, async (req, res, next) => {
     try {
-        let query = supabase
+        let query = supabaseService
             .from('notesupdated')
             .select('*')
             .order('created_at', { ascending: false });
@@ -150,7 +154,7 @@ app.get('/api/notes', authenticate, async (req, res, next) => {
         // Try user_id filter; if column missing, fall back to unfiltered
         const { data, error } = await query.eq('user_id', req.user.id);
         if (error && isMissingColumnError(error)) {
-            const { data: fallback, error: fallbackErr } = await supabase
+            const { data: fallback, error: fallbackErr } = await supabaseService
                 .from('notesupdated')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -181,7 +185,7 @@ app.post('/api/notes', authenticate, async (req, res, next) => {
 
         const insertData = { title: title.trim(), content: content || '', is_folder, parent_id: parent_id || null };
         // Try with user_id; if column missing, fall back
-        const { data, error } = await supabase
+        const { data, error } = await supabaseService
             .from('notesupdated')
             .insert([{ ...insertData, user_id: req.user.id }])
             .select();
@@ -215,7 +219,7 @@ app.put('/api/notes/:id', authenticate, async (req, res, next) => {
         if (title !== undefined) cleanUpdateData.title = title.trim();
         if (content !== undefined) cleanUpdateData.content = content;
 
-        let query = supabase
+        let query = supabaseService
             .from('notesupdated')
             .update(cleanUpdateData)
             .eq('id', id)
@@ -248,7 +252,7 @@ app.delete('/api/notes/:id', authenticate, async (req, res, next) => {
         const { id } = req.params;
 
         // Check if this is a folder with children (try user_id, fall back)
-        let childrenQuery = supabase
+        let childrenQuery = supabaseService
             .from('notesupdated')
             .select('id')
             .eq('parent_id', id);
@@ -272,7 +276,7 @@ app.delete('/api/notes/:id', authenticate, async (req, res, next) => {
         }
 
         // Delete (try user_id, fall back)
-        let delQuery = supabase
+        let delQuery = supabaseService
             .from('notesupdated')
             .delete()
             .eq('id', id);

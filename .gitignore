@@ -5,3 +5,6 @@ node_modules
 .opencode
 spec 01
 bin
+.env*
+schema.sql
+notesupdated-dump.json
