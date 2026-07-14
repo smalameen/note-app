@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Second Brain</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdklEQVR4nO2ZXYhNURTHt68kEoXIR/IgvHggJmbuXveOYRIN6ax1xyglDVFelMLDeCAevHj1lQeRoeZBlBp3rXNvpElT3siL5COl8ZVMY3K1r9vImHPuOffufWfo/mu/ndbev7X2WmvvfZSqqaaxJ6/Tm5DyvTUgeFgzXdWCj0DoLTD2gVAehL5owRfA2KuZ7oBgR9JPp5ru7ZqqxoIaczuXaKazwPimuOB4g3EAhLogg5tGBUBz6yzNeLG4kLyNYaKoOb26ahBJwc2a8Z0tgD9haNBsO5XvGO8UAiR96Ndk9iH+AGK6sepx+yRHEHjANcCwcV3l1Ti7EBlqrEYk/o4MHrUGobllRqGUlq5AL0HoOAgeAaaMZrrU4NNCzd40yKTXFotDb+EbP31QM10Boe8lbA4k7+NKSyB4LoLnXmv25sa1DRncUdpBlKkYItXtzddC/UEVRjOdMF6vZA7wvd0gyCUcVVcRiGY8FTwBnla2lFfjQOh8CMyFiowXjhWBXmpdZg1EKVWf9WYD04+A7fXZ5FpZhhNCy0M8dM1F0yo2208jzpmhljKNenuCQDbkvEXKkcDHfQF5crIsg4VyGQCSynorlCM1Pdg1JwDkXlkGi0fxoES/rRypkCsyYk/pa77bPDm2QRB6HgSSkPR2JxS/dsLeEAd2xDco9D64YpVZQUIB2hYYiMBkl0Lv6jdFKJbh0OOD5YsQZHB9yQ4vQ1ssG+swCUIfQjrtJxsAZs8nfdpYPKdFAxHKJ4XaI0+iGZ+EGTNJGWfRmvVEYOqJs2AIHh8a/LZ5kSYGocthxjR7++OAmMcGSxD54uiM6EHaUsLQFwMT5dRb99CbAkwPLYPkE4JbS4KYq2ZY5RppjGSnMUtLtZDYhoBC4lOPtbtIEIjp/ib8Nl9aYPj2FvoYCcQklGb6Ghck6dM6EPzmCgCGBt6MBFKMypm4ICCUcw9BXeYaHhmk+VHb9Kh1/jeIw2gw9poKqMq9J8SMiLNIqErvQebRbEyA2DjUmd7xz4NESXzXIFpoUNmQueKGvThWAeSVsiUt2D2KW6vLGggIHRu1iDBuswaS9DExGiBasFvZlGZaXG0QLfTU/CWzCmJ+YFYTRAvdqs/tnGkVotRCKwJhfGNOs+bZRzM+M78lzO8IJwAuQZwuOEg1EKmBuNF/A1JTTSqyfgJ2ffNp2sklewAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -178,6 +179,12 @@
             color: white;
             margin: 0 auto 20px auto;
             font-weight: 500;
+            overflow: hidden;
+        }
+        .auth-brand-img {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
         }
 
         .auth-title {
@@ -362,6 +369,11 @@
             font-family: var(--font-display);
             box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
         }
+        .brand-icon-img {
+            width: 16px;
+            height: 16px;
+            filter: brightness(0);
+        }
 
         .brand-text {
             display: flex;
@@ -522,6 +534,12 @@
             opacity: 0.2;
             line-height: 1;
             font-weight: 300;
+        }
+        .empty-state-icon-img {
+            width: 32px;
+            height: 32px;
+            opacity: 0.2;
+            vertical-align: middle;
         }
 
         .empty-state-text { line-height: 1.65; max-width: 220px; color: var(--color-text-subtle); }
@@ -1178,7 +1196,7 @@
     <!-- Auth Overlay -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card">
-            <div class="auth-brand">⚡</div>
+            <div class="auth-brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdklEQVR4nO2ZXYhNURTHt68kEoXIR/IgvHggJmbuXveOYRIN6ax1xyglDVFelMLDeCAevHj1lQeRoeZBlBp3rXNvpElT3siL5COl8ZVMY3K1r9vImHPuOffufWfo/mu/ndbev7X2WmvvfZSqqaaxJ6/Tm5DyvTUgeFgzXdWCj0DoLTD2gVAehL5owRfA2KuZ7oBgR9JPp5ru7ZqqxoIaczuXaKazwPimuOB4g3EAhLogg5tGBUBz6yzNeLG4kLyNYaKoOb26ahBJwc2a8Z0tgD9haNBsO5XvGO8UAiR96Ndk9iH+AGK6sepx+yRHEHjANcCwcV3l1Ti7EBlqrEYk/o4MHrUGobllRqGUlq5AL0HoOAgeAaaMZrrU4NNCzd40yKTXFotDb+EbP31QM10Boe8lbA4k7+NKSyB4LoLnXmv25sa1DRncUdpBlKkYItXtzddC/UEVRjOdMF6vZA7wvd0gyCUcVVcRiGY8FTwBnla2lFfjQOh8CMyFiowXjhWBXmpdZg1EKVWf9WYD04+A7fXZ5FpZhhNCy0M8dM1F0yo2208jzpmhljKNenuCQDbkvEXKkcDHfQF5crIsg4VyGQCSynorlCM1Pdg1JwDkXlkGi0fxoES/rRypkCsyYk/pa77bPDm2QRB6HgSSkPR2JxS/dsLeEAd2xDco9D64YpVZQUIB2hYYiMBkl0Lv6jdFKJbh0OOD5YsQZHB9yQ4vQ1ssG+swCUIfQjrtJxsAZs8nfdpYPKdFAxHKJ4XaI0+iGZ+EGTNJGWfRmvVEYOqJs2AIHh8a/LZ5kSYGocthxjR7++OAmMcGSxD54uiM6EHaUsLQFwMT5dRb99CbAkwPLYPkE4JbS4KYq2ZY5RppjGSnMUtLtZDYhoBC4lOPtbtIEIjp/ib8Nl9aYPj2FvoYCcQklGb6Ghck6dM6EPzmCgCGBt6MBFKMypm4ICCUcw9BXeYaHhmk+VHb9Kh1/jeIw2gw9poKqMq9J8SMiLNIqErvQebRbEyA2DjUmd7xz4NESXzXIFpoUNmQueKGvThWAeSVsiUt2D2KW6vLGggIHRu1iDBuswaS9DExGiBasFvZlGZaXG0QLfTU/CWzCmJ+YFYTRAvdqs/tnGkVotRCKwJhfGNOs+bZRzM+M78lzO8IJwAuQZwuOEg1EKmBuNF/A1JTTSqyfgJ2ffNp2sklewAAAABJRU5ErkJggg==" alt="brain" class="auth-brand-img"></div>
             <h2 class="auth-title">Second Brain</h2>
             <p class="auth-subtitle" id="authSubtitle">Sign in to your account</p>
 
@@ -1202,7 +1220,7 @@
         <div class="left-panels">
             <section class="notes-panel">
                 <div class="brand-container">
-                    <div class="brand-icon">⚡</div>
+                    <div class="brand-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdklEQVR4nO2ZXYhNURTHt68kEoXIR/IgvHggJmbuXveOYRIN6ax1xyglDVFelMLDeCAevHj1lQeRoeZBlBp3rXNvpElT3siL5COl8ZVMY3K1r9vImHPuOffufWfo/mu/ndbev7X2WmvvfZSqqaaxJ6/Tm5DyvTUgeFgzXdWCj0DoLTD2gVAehL5owRfA2KuZ7oBgR9JPp5ru7ZqqxoIaczuXaKazwPimuOB4g3EAhLogg5tGBUBz6yzNeLG4kLyNYaKoOb26ahBJwc2a8Z0tgD9haNBsO5XvGO8UAiR96Ndk9iH+AGK6sepx+yRHEHjANcCwcV3l1Ti7EBlqrEYk/o4MHrUGobllRqGUlq5AL0HoOAgeAaaMZrrU4NNCzd40yKTXFotDb+EbP31QM10Boe8lbA4k7+NKSyB4LoLnXmv25sa1DRncUdpBlKkYItXtzddC/UEVRjOdMF6vZA7wvd0gyCUcVVcRiGY8FTwBnla2lFfjQOh8CMyFiowXjhWBXmpdZg1EKVWf9WYD04+A7fXZ5FpZhhNCy0M8dM1F0yo2208jzpmhljKNenuCQDbkvEXKkcDHfQF5crIsg4VyGQCSynorlCM1Pdg1JwDkXlkGi0fxoES/rRypkCsyYk/pa77bPDm2QRB6HgSSkPR2JxS/dsLeEAd2xDco9D64YpVZQUIB2hYYiMBkl0Lv6jdFKJbh0OOD5YsQZHB9yQ4vQ1ssG+swCUIfQjrtJxsAZs8nfdpYPKdFAxHKJ4XaI0+iGZ+EGTNJGWfRmvVEYOqJs2AIHh8a/LZ5kSYGocthxjR7++OAmMcGSxD54uiM6EHaUsLQFwMT5dRb99CbAkwPLYPkE4JbS4KYq2ZY5RppjGSnMUtLtZDYhoBC4lOPtbtIEIjp/ib8Nl9aYPj2FvoYCcQklGb6Ghck6dM6EPzmCgCGBt6MBFKMypm4ICCUcw9BXeYaHhmk+VHb9Kh1/jeIw2gw9poKqMq9J8SMiLNIqErvQebRbEyA2DjUmd7xz4NESXzXIFpoUNmQueKGvThWAeSVsiUt2D2KW6vLGggIHRu1iDBuswaS9DExGiBasFvZlGZaXG0QLfTU/CWzCmJ+YFYTRAvdqs/tnGkVotRCKwJhfGNOs+bZRzM+M78lzO8IJwAuQZwuOEg1EKmBuNF/A1JTTSqyfgJ2ffNp2sklewAAAABJRU5ErkJggg==" alt="brain" class="brand-icon-img"></div>
                     <div class="brand-text">
                         <h1 class="brand-title">Second Brain</h1>
                         <span class="brand-sub">Workspace</span>
@@ -1832,7 +1850,7 @@
             if (roots.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">${query ? '~' : '⚡'}</div>
+                        <div class="empty-state-icon">${query ? '~' : '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAADdklEQVR4nO2ZXYhNURTHt68kEoXIR/IgvHggJmbuXveOYRIN6ax1xyglDVFelMLDeCAevHj1lQeRoeZBlBp3rXNvpElT3siL5COl8ZVMY3K1r9vImHPuOffufWfo/mu/ndbev7X2WmvvfZSqqaaxJ6/Tm5DyvTUgeFgzXdWCj0DoLTD2gVAehL5owRfA2KuZ7oBgR9JPp5ru7ZqqxoIaczuXaKazwPimuOB4g3EAhLogg5tGBUBz6yzNeLG4kLyNYaKoOb26ahBJwc2a8Z0tgD9haNBsO5XvGO8UAiR96Ndk9iH+AGK6sepx+yRHEHjANcCwcV3l1Ti7EBlqrEYk/o4MHrUGobllRqGUlq5AL0HoOAgeAaaMZrrU4NNCzd40yKTXFotDb+EbP31QM10Boe8lbA4k7+NKSyB4LoLnXmv25sa1DRncUdpBlKkYItXtzddC/UEVRjOdMF6vZA7wvd0gyCUcVVcRiGY8FTwBnla2lFfjQOh8CMyFiowXjhWBXmpdZg1EKVWf9WYD04+A7fXZ5FpZhhNCy0M8dM1F0yo2208jzpmhljKNenuCQDbkvEXKkcDHfQF5crIsg4VyGQCSynorlCM1Pdg1JwDkXlkGi0fxoES/rRypkCsyYk/pa77bPDm2QRB6HgSSkPR2JxS/dsLeEAd2xDco9D64YpVZQUIB2hYYiMBkl0Lv6jdFKJbh0OOD5YsQZHB9yQ4vQ1ssG+swCUIfQjrtJxsAZs8nfdpYPKdFAxHKJ4XaI0+iGZ+EGTNJGWfRmvVEYOqJs2AIHh8a/LZ5kSYGocthxjR7++OAmMcGSxD54uiM6EHaUsLQFwMT5dRb99CbAkwPLYPkE4JbS4KYq2ZY5RppjGSnMUtLtZDYhoBC4lOPtbtIEIjp/ib8Nl9aYPj2FvoYCcQklGb6Ghck6dM6EPzmCgCGBt6MBFKMypm4ICCUcw9BXeYaHhmk+VHb9Kh1/jeIw2gw9poKqMq9J8SMiLNIqErvQebRbEyA2DjUmd7xz4NESXzXIFpoUNmQueKGvThWAeSVsiUt2D2KW6vLGggIHRu1iDBuswaS9DExGiBasFvZlGZaXG0QLfTU/CWzCmJ+YFYTRAvdqs/tnGkVotRCKwJhfGNOs+bZRzM+M78lzO8IJwAuQZwuOEg1EKmBuNF/A1JTTSqyfgJ2ffNp2sklewAAAABJRU5ErkJggg==" alt="brain" class="empty-state-icon-img">'}</div>
                         <div class="empty-state-text">${query ? 'No results for "<strong>' + escapeHtml(query) + '</strong>"' : 'No notes yet.<br>Click <strong>+ Note</strong> or <strong>+ Folder</strong> to get started.'}</div>
                     </div>`;
                 return;
